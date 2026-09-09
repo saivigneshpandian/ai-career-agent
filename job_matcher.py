@@ -44,6 +44,46 @@ llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash",google_api_key=GEMINI_API_
 
 structure_llm=llm.with_structured_output(MatchResult)
 
+
+def calculate_rule_score(candidate : CandidateProfile,job:JobInformation):
+    score=0
+    breakdown={}
+
+    if candidate.experience:
+        score+=20
+        breakdown["experience"]=20
+    else:
+        breakdown["experience"]=0
+        
+    
+    if candidate.education:
+        score+= 5
+        breakdown["education"] = 5
+    else:
+        breakdown["education"] = 0
+
+    # Location
+    preferred_locations = [
+        location.lower()
+        for location in candidate.preferred_locations
+    ]
+
+    if job.location.lower() in preferred_locations:
+        score += 5
+        breakdown["location"] = 5
+    else:
+        breakdown["location"] = 0
+
+    # Work mode
+    if candidate.preferred_work_modes:
+        score += 5
+        breakdown["work_mode"] = 5
+    else:
+        breakdown["work_mode"] = 0
+
+    return score, breakdown
+
+
 def match_job(candidate:CandidateProfile,job:JobInformation):
     prompt=f"""
     You are an expert AI career matching assistance.
@@ -132,6 +172,14 @@ if __name__ == "__main__":
         salary="Not mentioned",
         application_link="https://example.com/apply"
     )
+    rule_score, breakdown = calculate_rule_score(candidate, job)
+
+    print("\n========== RULE SCORE ==========\n")
+    print("Rule Score:", rule_score)
+
+    print("Breakdown:")
+    for factor, points in breakdown.items():
+        print(f"- {factor}: {points}")
 
     result = match_job(candidate, job)
 
