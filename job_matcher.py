@@ -140,7 +140,28 @@ def calculate_final_score(
     )
 
     return round(final_score)
+def calculate_skill_score(candidate: CandidateProfile, job: JobInformation):
+    candidate_skills = {
+        skill.lower().strip()
+        for skill in candidate.skills
+    }
 
+    job_skills = {
+        skill.lower().strip()
+        for skill in job.skills
+    }
+
+    if not job_skills:
+        return 0, [], []
+
+    matched_skills = candidate_skills.intersection(job_skills)
+    missing_skills = job_skills - candidate_skills
+
+    score = round(
+        (len(matched_skills) / len(job_skills)) * 40
+    )
+
+    return score, sorted(matched_skills), sorted(missing_skills)
 
 def match_job(
     candidate: CandidateProfile,
@@ -365,3 +386,19 @@ if __name__ == "__main__":
     print("\nExplanation:")
 
     print(result.explanation)
+
+    skill_score, matched_skills, missing_skills = calculate_skill_score(
+    candidate,
+    job
+)
+
+print("\n========== SKILL SCORE ==========\n")
+print("Skill Score:", skill_score, "/ 40")
+
+print("Matched Skills:")
+for skill in matched_skills:
+    print("-", skill)
+
+print("Missing Skills:")
+for skill in missing_skills:
+    print("-", skill)
