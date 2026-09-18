@@ -52,6 +52,30 @@ llm = ChatGoogleGenerativeAI(
 structure_llm = llm.with_structured_output(MatchResult)
 
 
+def calculate_experience_score(
+    candidate: CandidateProfile,
+    job: JobInformation
+):
+    if not candidate.experience:
+        return 0
+
+    job_experience = (job.experience or "").lower().strip()
+
+    # Entry-level / fresher-friendly jobs
+    if (
+        "0-1" in job_experience
+        or "0-2" in job_experience
+        or "fresher" in job_experience
+        or "entry" in job_experience
+        or "no experience" in job_experience
+    ):
+        return 20
+
+    # If the job has an experience requirement
+    # that we cannot reliably compare with the
+    # candidate profile, give partial credit.
+    return 10
+
 def calculate_rule_score(
     candidate: CandidateProfile,
     job: JobInformation
@@ -61,11 +85,14 @@ def calculate_rule_score(
     breakdown = {}
 
     # Experience
-    if candidate.experience and job.experience:
-        score += 20
-        breakdown["experience"] = 20
-    else:
-        breakdown["experience"] = 0
+    experience_score = calculate_experience_score(
+        candidate,
+        job
+    )
+
+    score += experience_score
+
+    breakdown["experience"] = experience_score
 
     # Education
     if candidate.education:
